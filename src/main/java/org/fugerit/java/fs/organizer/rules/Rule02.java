@@ -21,6 +21,7 @@ public class Rule02 extends RuleBase {
 	public static final String PARAM_BASE_DIR = "base-dir";
 	public static final String PARAM_MOVE = "move";
 	public static final String PARAM_OUT_DIR = "output";
+	public static final String PARAM_SKIP_ERROR = "skip-error";
 	
 	@Override
 	public int apply(Properties params) throws Exception {
@@ -28,13 +29,16 @@ public class Rule02 extends RuleBase {
         logger.info( this.getClass().getSimpleName()+" START" );
         String paramBase = params.getProperty( PARAM_BASE_DIR );
         String paramMove = params.getProperty( PARAM_MOVE, "" );
+        String paramSkipError = params.getProperty( PARAM_SKIP_ERROR, "" );
         String paramOut = params.getProperty( PARAM_OUT_DIR, "" );
         logger.info( "paramBase -> {}", paramBase );
         logger.info( "paramMove -> {}", paramMove );
+        logger.info( "paramSkipError -> {}", paramSkipError );
         logger.info( "paramOut -> {}", paramOut );
         File baseFile = new File( paramBase );
         File[] listFile = baseFile.listFiles();
         boolean doMove = BooleanUtils.isTrue( paramMove );
+        boolean skipError = BooleanUtils.isTrue( paramSkipError );
         for ( File current : listFile ) {
         	Mp3File mp3file = new Mp3File( current );
         	try {
@@ -61,7 +65,7 @@ public class Rule02 extends RuleBase {
             		track = id3v1.getTrack();
             	}
             	if ( track.indexOf( "/" ) != -1 ) {
-            		logger.info( "disk {}", disk );
+            		logger.debug( "disk {}", disk );
             		track = track.split("/")[0];
             		if ( StringUtils.isNotEmpty( disk ) ) {
             			if ( disk.indexOf( "/" ) != -1 ) {
@@ -92,8 +96,10 @@ public class Rule02 extends RuleBase {
             	}
             	logger.info( "{} -> {}", current.getCanonicalPath(), outputFile.getCanonicalPath() );	
         	} catch (Exception e) {
-        		logger.info( "FILE : "+current.getCanonicalPath() );
-        		throw e;
+        		logger.info( "ERROR ON FILE : "+current.getCanonicalPath() );
+        		if ( !skipError ) {
+        			throw e;	
+        		}
         	}
         }
 		return res;
